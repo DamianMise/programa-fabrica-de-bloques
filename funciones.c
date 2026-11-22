@@ -321,14 +321,16 @@ int calcularProduccion(Bloque *bloques, int cont, Plan *p){
     int diasSemana = (int)validarFloatRango(1,7);
     printf("Horas por jornada (1-24): ");
     float horasJornada = validarFloatRango(1,24);
+    printf("Mezcladoras o cuadrillas trabajando al mismo tiempo (1-20): ");
+    int equipos = (int)validarFloatRango(1,20);
     int diasTotales = diasSemana * SEMANAS[p->periodo];
     printf("Dias sin trabajar en el periodo por lluvia u otras causas (0-%d): ",diasTotales);
     int diasPerdidos = (int)validarFloatRango(0,diasTotales);
     printf("Porcentaje de produccion real de la jornada (1-100): ");
     float ef = validarFloatRango(1,100);
 
-    p->horasDisponibles = (diasTotales - diasPerdidos) * horasJornada * ef / 100.0f;
-    p->horasPerdidas = diasPerdidos * horasJornada * ef / 100.0f;
+    p->horasDisponibles = (diasTotales - diasPerdidos) * horasJornada * ef / 100.0f * equipos;
+    p->horasPerdidas = diasPerdidos * horasJornada * ef / 100.0f * equipos;
 
     printf("\n============== DEMANDA Y PEDIDOS ==============\n");
     p->horasNecesarias = 0;
@@ -337,10 +339,11 @@ int calcularProduccion(Bloque *bloques, int cont, Plan *p){
         p->planificados[i] = 0;
         if (bloques[i].estado == 3) continue;
         Bloque *b = &bloques[i];
-        int base = (int)(b->demanda * (float)SEMANAS[p->periodo] / SEMANAS[b->periodo] + 0.5f);
-        printf("%s: demanda equivalente al periodo %s = %d bloques\n",
-               b->nombre,PERIODOS[p->periodo],base);
-        printf("  Pedidos adicionales confirmados (bloques, 0 si no hay): ");
+       int base = (int)(b->demanda * (float)SEMANAS[p->periodo] / SEMANAS[b->periodo] + 0.5f);
+        printf("\n  ----- %s -----\n",b->nombre);
+        printf("  Demanda registrada:  %d bloques (%s)\n",b->demanda,PERIODOS[b->periodo]);
+        printf("  Demanda a planificar: %d bloques (%s)\n",base,PERIODOS[p->periodo]);
+        printf("  Pedidos adicionales confirmados (Ingrese los bloques o 0 si no hay): ");
         int extra = (int)validarFloatRango(0,1000000);
         p->planificados[i] = base + extra;
         p->horasNecesarias += p->planificados[i] / (float)b->bloquesPorQuintal
